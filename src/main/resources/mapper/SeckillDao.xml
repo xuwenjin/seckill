@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.xwj.dao.SeckillDao">
+	<!-- 为DAO接口方法提供sql语句配置 -->
+	
+	<!-- 可重用的SQL代码段 -->
+	<sql id="columns">seckill_id, name, number, start_time, end_time, create_time</sql>
+
+	<update id="reduceNumber">
+		update seckill
+			set number = number - 1
+		where seckill_id = #{seckillId}
+		and start_time <![CDATA[ <= ]]>
+		#{killTime}
+		and end_time >= #{killTime}
+		and number > 0
+	</update>
+
+	<select id="queryById" resultType="Seckill">
+		select 
+			<include refid="columns"/>
+		from seckill
+		where seckill_id =
+		#{seckillId}
+	</select>
+
+	<!-- 返回结果中，是集合时，resultType指定集合可以包含的类型 -->
+	<select id="queryAll" parameterType="int" resultType="Seckill">
+		select 
+			<include refid="columns"/>
+		from seckill
+		order by create_time desc
+		limit #{offset}, #{limit}
+	</select>
+	
+	<!-- 1、在调用sql时传入的参数,就是DAO接口中的参数是map类型,其中包含存储过程要使用的in/out类型的参数，在执行完之
+			后返回的结果就在那个代表out的键值对中。在本示例中就是result键值对。
+		2、在xml文件中,需要设置statementType=CALLABLE<br> 
+		3、传入参数时需要指定mode=IN/OUT, 一定要是大写 -->
+	<select id="killByProcedure" statementType="CALLABLE" parameterType="map">
+		call execute_seckill(
+			#{seckillId, jdbcType=INTEGER, mode=IN},
+			#{phone, jdbcType=VARCHAR, mode=IN},
+			#{killTime, jdbcType=TIMESTAMP, mode=IN},
+			#{result, jdbcType=INTEGER, mode=OUT}
+		)
+	</select>
+
+</mapper>
